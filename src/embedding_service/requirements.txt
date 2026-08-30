@@ -1,0 +1,9 @@
+langchain
+langchain-google-genai
+langchain-groq
+langchain-qdrant
+qdrant-client
+pypdf
+python-dotenv
+pdf2image
+pillow
