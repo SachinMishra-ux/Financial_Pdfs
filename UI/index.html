@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial RAG Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Marked.js for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <header class="app-header">
+        <h1>📊 Multimodal Financial RAG Assistant</h1>
+        <p>Ask questions about your financial documents and view reference pages side-by-side with the answer.</p>
+    </header>
+
+    <main class="app-container">
+        <section class="control-panel">
+            <form id="query-form" class="query-form">
+                <div class="input-group">
+                    <label for="question">Ask a question:</label>
+                    <input type="text" id="question" required placeholder="e.g. What is JPMorgan's net income in 2023?" autocomplete="off">
+                </div>
+                <div class="config-group">
+                    <div class="slider-group">
+                        <label for="limit">Reference Pages to retrieve (1-5):</label>
+                        <input type="number" id="limit" min="1" max="5" value="3">
+                    </div>
+                    <button type="submit" id="submit-btn" class="btn btn-primary">Submit Query</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Dynamic Results Container -->
+        <section id="results" class="results-layout hidden">
+            <!-- Left Side: Reference Images -->
+            <div class="panel reference-panel">
+                <h2>📄 Reference Document Pages</h2>
+                <div id="images-container" class="images-container">
+                    <!-- Base64 pages will be rendered here dynamically -->
+                </div>
+            </div>
+
+            <!-- Right Side: Text Answer -->
+            <div class="panel answer-panel">
+                <h2>💡 Generated Answer</h2>
+                <div id="answer-container" class="answer-content">
+                    <!-- Answer will be rendered here dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading overlay -->
+        <div id="loading" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p>Retrieving context and generating answer...</p>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
