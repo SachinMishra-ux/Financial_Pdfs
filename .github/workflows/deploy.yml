@@ -80,17 +80,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── Write runtime secrets to .env ─────────────────────────────────────────
-      - name: Write runtime .env from GitHub Secrets
-        run: |
-          cat > .env <<EOF
-          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-          AWS_REGION=${{ env.AWS_REGION }}
-          SQS_QUEUE_URL=${{ secrets.SQS_QUEUE_URL }}
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          EOF
-
       # ── Tear down existing stack ──────────────────────────────────────────────
       - name: Stop existing containers (if any)
         run: |
@@ -104,13 +93,21 @@ jobs:
         run: |
           docker pull $ECR_REGISTRY/$ECR_REPO_NAME:latest
 
-      # ── Deploy with docker compose ────────────────────────────────────────────
+      # ── Deploy with docker compose (In-Memory Secrets, No .env file on disk) ──
       - name: Deploy with docker compose
         env:
-          ECR_REGISTRY:      ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPO_NAME:     ${{ secrets.ECR_REPO_NAME }}
+          ECR_REGISTRY:          ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPO_NAME:         ${{ secrets.ECR_REPO_NAME }}
+          GEMINI_API_KEY:        ${{ secrets.GEMINI_API_KEY }}
+          AWS_REGION:            ${{ env.AWS_REGION }}
+          SQS_QUEUE_URL:         ${{ secrets.SQS_QUEUE_URL }}
+          AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           export GENERATION_SERVICE_IMAGE=$ECR_REGISTRY/$ECR_REPO_NAME:latest
+
+          # Ensure no plain-text .env file exists on the host disk
+          rm -f .env
 
           docker compose \
             -f docker-compose.yml \
