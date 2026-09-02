@@ -23,6 +23,10 @@ services:
       - QDRANT_URL=http://qdrant:6333
       - COLLECTION_NAME=financial_documents
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - AWS_REGION=${AWS_REGION:-eu-north-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME:-financial-rag-documents-001}
     depends_on:
       - qdrant
     restart: unless-stopped

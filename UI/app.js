@@ -1,6 +1,58 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Base API URL
-    const BASE_URL = 'http://localhost:8000';
+    // Elements - API Server Config
+    const apiUrlInput = document.getElementById('api-url-input');
+    const checkApiBtn = document.getElementById('check-api-btn');
+    const apiStatusBadge = document.getElementById('api-status-badge');
+
+    // Default to deployed EC2 endpoint, or restore previous user input from localStorage
+    const savedApiUrl = localStorage.getItem('financial_rag_api_url') || 'http://13.61.154.83:8000';
+    if (apiUrlInput) {
+        apiUrlInput.value = savedApiUrl;
+    }
+
+    function getBaseUrl() {
+        if (!apiUrlInput) return 'http://13.61.154.83:8000';
+        const url = apiUrlInput.value.trim() || 'http://13.61.154.83:8000';
+        return url.replace(/\/+$/, '');
+    }
+
+    // Health check logic for API connection
+    async function checkApiHealth() {
+        const url = getBaseUrl();
+        localStorage.setItem('financial_rag_api_url', url);
+        apiStatusBadge.className = 'badge badge-connecting';
+        apiStatusBadge.textContent = 'Checking...';
+
+        try {
+            const res = await fetch(`${url}/health`, { method: 'GET' });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.status === 'healthy') {
+                    apiStatusBadge.className = 'badge badge-success';
+                    apiStatusBadge.textContent = '● Connected (Healthy)';
+                } else {
+                    apiStatusBadge.className = 'badge badge-connecting';
+                    apiStatusBadge.textContent = '● Degraded';
+                }
+            } else {
+                apiStatusBadge.className = 'badge badge-error';
+                apiStatusBadge.textContent = `● HTTP ${res.status}`;
+            }
+        } catch (err) {
+            apiStatusBadge.className = 'badge badge-error';
+            apiStatusBadge.textContent = '● Offline / Unreachable';
+        }
+    }
+
+    if (checkApiBtn) {
+        checkApiBtn.addEventListener('click', checkApiHealth);
+    }
+    if (apiUrlInput) {
+        apiUrlInput.addEventListener('change', checkApiHealth);
+    }
+
+    // Run initial health check on page load
+    checkApiHealth();
 
     // Elements - Navigation Tabs
     const tabBtnQa = document.getElementById('tab-btn-qa');
@@ -56,14 +108,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!question) return;
 
         // Show loading and clear previous answers
-        loadingText.textContent = 'Retrieving context and generating answer...';
+        loadingText.textContent = 'Retrieving context from Qdrant and generating answer via Gemini...';
         loadingOverlay.classList.remove('hidden');
         resultsLayout.classList.add('hidden');
         imagesContainer.innerHTML = '';
         answerContainer.innerHTML = '';
 
         try {
-            const response = await fetch(`${BASE_URL}/query`, {
+            const currentBaseUrl = getBaseUrl();
+            const response = await fetch(`${currentBaseUrl}/query`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -187,12 +240,12 @@ document.addEventListener('DOMContentLoaded', () => {
         hideUploadStatus();
     });
 
-    // Upload to S3 via API
+    // Upload to S3 via deployed API
     uploadBtn.addEventListener('click', async () => {
         if (!currentFile) return;
 
         hideUploadStatus();
-        loadingText.textContent = `Uploading ${currentFile.name} to Amazon S3...`;
+        loadingText.textContent = `Uploading ${currentFile.name} to Amazon S3 via EC2 backend...`;
         loadingOverlay.classList.remove('hidden');
         uploadBtn.disabled = true;
 
@@ -200,7 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('file', currentFile);
 
         try {
-            const response = await fetch(`${BASE_URL}/upload`, {
+            const currentBaseUrl = getBaseUrl();
+            const response = await fetch(`${currentBaseUrl}/upload`, {
                 method: 'POST',
                 body: formData
             });
@@ -212,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = await response.json();
             showUploadStatus(
-                `🎉 ${result.message} Check your worker logs to watch the ingestion process.`,
+                `🎉 ${result.message} Check your EC2 worker container logs to watch the ingestion process.`,
                 'success'
             );
             clearSelectedFile();

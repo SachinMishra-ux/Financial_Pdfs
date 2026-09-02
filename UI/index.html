@@ -12,6 +12,12 @@
     <header class="app-header">
         <h1>📊 Multimodal Financial RAG Assistant</h1>
         <p>Ask questions about your financial documents and ingest new PDFs directly to Amazon S3.</p>
+        <div class="api-config-bar">
+            <span class="api-config-label">🌐 Server Endpoint:</span>
+            <input type="text" id="api-url-input" class="api-url-input" value="http://13.61.154.83:8000" placeholder="http://13.61.154.83:8000">
+            <button type="button" id="check-api-btn" class="btn btn-sm btn-secondary">Connect</button>
+            <span id="api-status-badge" class="badge badge-connecting">Connecting...</span>
+        </div>
     </header>
 
     <main class="app-container">
