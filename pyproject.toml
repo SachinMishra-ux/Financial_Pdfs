@@ -18,4 +18,7 @@ dependencies = [
     "pdf2image",
     "pillow",
     "google-genai",
+    "prompt-inspector-ux==0.1.4",
+    "boto3>=1.34.0",
+    "python-multipart>=0.0.32",
 ]

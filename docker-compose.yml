@@ -26,3 +26,20 @@ services:
     depends_on:
       - qdrant
     restart: unless-stopped
+
+  ingestion-worker:
+    image: ${GENERATION_SERVICE_IMAGE:-generation-service:latest}
+    container_name: ingestion-worker
+    command: ["python", "-u", "src/embedding_service/s3_worker.py"]
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - COLLECTION_NAME=financial_documents
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - AWS_REGION=${AWS_REGION:-eu-north-1}
+      - SQS_QUEUE_URL=${SQS_QUEUE_URL}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+

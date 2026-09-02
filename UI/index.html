@@ -11,49 +11,105 @@
 <body>
     <header class="app-header">
         <h1>📊 Multimodal Financial RAG Assistant</h1>
-        <p>Ask questions about your financial documents and view reference pages side-by-side with the answer.</p>
+        <p>Ask questions about your financial documents and ingest new PDFs directly to Amazon S3.</p>
     </header>
 
     <main class="app-container">
-        <section class="control-panel">
-            <form id="query-form" class="query-form">
-                <div class="input-group">
-                    <label for="question">Ask a question:</label>
-                    <input type="text" id="question" required placeholder="e.g. What is JPMorgan's net income in 2023?" autocomplete="off">
-                </div>
-                <div class="config-group">
-                    <div class="slider-group">
-                        <label for="limit">Reference Pages to retrieve (1-5):</label>
-                        <input type="number" id="limit" min="1" max="5" value="3">
+        <!-- Navigation Tabs -->
+        <nav class="tabs-nav">
+            <button id="tab-btn-qa" class="tab-btn active">
+                <span class="tab-icon">💬</span>
+                <span>Financial Q&A</span>
+            </button>
+            <button id="tab-btn-upload" class="tab-btn">
+                <span class="tab-icon">📤</span>
+                <span>Upload Document (S3)</span>
+            </button>
+        </nav>
+
+        <!-- VIEW 1: Question & Answering -->
+        <section id="view-qa" class="tab-view active">
+            <section class="control-panel">
+                <form id="query-form" class="query-form">
+                    <div class="input-group">
+                        <label for="question">Ask a question:</label>
+                        <input type="text" id="question" required placeholder="e.g. What is JPMorgan's net income in 2023?" autocomplete="off">
                     </div>
-                    <button type="submit" id="submit-btn" class="btn btn-primary">Submit Query</button>
+                    <div class="config-group">
+                        <div class="slider-group">
+                            <label for="limit">Reference Pages to retrieve (1-5):</label>
+                            <input type="number" id="limit" min="1" max="5" value="3">
+                        </div>
+                        <button type="submit" id="submit-btn" class="btn btn-primary">Submit Query</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Dynamic Results Container: 50/50 side-by-side -->
+            <section id="results" class="results-layout hidden">
+                <!-- Left Side: Reference Images -->
+                <div class="panel reference-panel">
+                    <h2>📄 Reference Document Pages</h2>
+                    <div id="images-container" class="images-container">
+                        <!-- Base64 pages will be rendered here dynamically -->
+                    </div>
                 </div>
-            </form>
+
+                <!-- Right Side: Text Answer -->
+                <div class="panel answer-panel">
+                    <h2>💡 Generated Answer</h2>
+                    <div id="answer-container" class="answer-content">
+                        <!-- Answer will be rendered here dynamically -->
+                    </div>
+                </div>
+            </section>
         </section>
 
-        <!-- Dynamic Results Container -->
-        <section id="results" class="results-layout hidden">
-            <!-- Left Side: Reference Images -->
-            <div class="panel reference-panel">
-                <h2>📄 Reference Document Pages</h2>
-                <div id="images-container" class="images-container">
-                    <!-- Base64 pages will be rendered here dynamically -->
-                </div>
-            </div>
+        <!-- VIEW 2: Upload to S3 -->
+        <section id="view-upload" class="tab-view hidden">
+            <section class="control-panel upload-panel">
+                <h2>📤 Upload Financial PDF to S3</h2>
+                <p class="panel-subtitle">Upload any financial PDF report. It will be uploaded to your Amazon S3 bucket via the API, triggering automatic embedding and Qdrant ingestion.</p>
 
-            <!-- Right Side: Text Answer -->
-            <div class="panel answer-panel">
-                <h2>💡 Generated Answer</h2>
-                <div id="answer-container" class="answer-content">
-                    <!-- Answer will be rendered here dynamically -->
+                <div id="drop-zone" class="drop-zone">
+                    <div class="drop-zone-content">
+                        <div class="upload-icon">📄</div>
+                        <p class="drop-text">Drag & drop your PDF here, or <span class="browse-link">browse files</span></p>
+                        <p class="drop-hint">Only .pdf files are accepted</p>
+                    </div>
+                    <input type="file" id="pdf-file-input" accept=".pdf" class="file-input-hidden">
                 </div>
-            </div>
+
+                <div id="file-info-box" class="file-info-box hidden">
+                    <div class="file-details">
+                        <span class="file-name" id="selected-file-name">document.pdf</span>
+                        <span class="file-size" id="selected-file-size">0 KB</span>
+                    </div>
+                    <button type="button" id="remove-file-btn" class="btn-text">✕ Remove</button>
+                </div>
+
+                <div class="upload-action-row">
+                    <button id="upload-btn" class="btn btn-primary" disabled>Upload to S3</button>
+                </div>
+
+                <!-- Live Upload Status Message -->
+                <div id="upload-status" class="status-alert hidden"></div>
+
+                <div class="info-card">
+                    <h4>⚙️ Event-Driven Ingestion Pipeline:</h4>
+                    <ul>
+                        <li>Target S3 Bucket: <code>financial-rag-documents-001</code></li>
+                        <li>S3 automatically publishes an event to Amazon SQS.</li>
+                        <li>The Ingestion Worker downloads the PDF, converts pages to images, generates Gemini embeddings, and stores them in Qdrant.</li>
+                    </ul>
+                </div>
+            </section>
         </section>
 
         <!-- Loading overlay -->
         <div id="loading" class="loading-overlay hidden">
             <div class="spinner"></div>
-            <p>Retrieving context and generating answer...</p>
+            <p id="loading-text">Retrieving context and generating answer...</p>
         </div>
     </main>
 

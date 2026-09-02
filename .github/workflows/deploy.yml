@@ -85,6 +85,10 @@ jobs:
         run: |
           cat > .env <<EOF
           GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          AWS_REGION=${{ env.AWS_REGION }}
+          SQS_QUEUE_URL=${{ secrets.SQS_QUEUE_URL }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           EOF
 
       # ── Tear down existing stack ──────────────────────────────────────────────

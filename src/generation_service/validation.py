@@ -9,3 +9,10 @@ class QueryResponse(BaseModel):
     answer: str
     pages_retrieved: int
     images: list[str] = Field(default=[], description="List of base64 encoded images of matching pages.")
+
+class UploadResponse(BaseModel):
+    status: str = Field(..., description="Upload status, e.g., 'success' or 'error'")
+    filename: str = Field(..., description="Original filename of the uploaded file")
+    bucket: str = Field(..., description="Target S3 bucket name")
+    s3_key: str = Field(..., description="S3 object key")
+    message: str = Field(..., description="Descriptive status message")
