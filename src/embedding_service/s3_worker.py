@@ -19,7 +19,7 @@ if PROJECT_ROOT not in sys.path:
 load_dotenv(dotenv_path=os.path.join(PROJECT_ROOT, '.env'))
 load_dotenv(dotenv_path=os.path.join(PROJECT_ROOT, 'src', '.env'))
 
-from src.embedding_service.document_processor import pdf_to_images, image_to_base64
+from src.embedding_service.document_processor import iter_pdf_pages, image_to_base64, get_pdf_page_count
 from src.embedding_service.embedder import GeminiEmbedder
 from src.embedding_service.qdrant_manager import QdrantManager
 
@@ -56,28 +56,38 @@ def init_qdrant_manager():
         print(f"Qdrant server not detected at {QDRANT_URL}. Falling back to local persistent path: {qdrant_path}")
         return QdrantManager(path=qdrant_path, collection_name=COLLECTION_NAME)
 
-def ingest_pdf_file(pdf_path, filename, qdrant_manager, embedder):
-    """Converts a local PDF file to images, generates Gemini embeddings, and stores in Qdrant."""
+def ingest_pdf_file(pdf_path, filename, qdrant_manager, embedder, batch_size=5):
+    """Converts a local PDF file page-by-page, generates Gemini embeddings, and batches upserts into Qdrant."""
     try:
         print(f"\n--- Ingesting {filename} ---")
-        images = pdf_to_images(pdf_path)
-        if not images:
-            print(f"No pages found or conversion failed for: {filename}")
+        total_pages = get_pdf_page_count(pdf_path)
+        if total_pages == 0:
+            print(f"No pages found or empty PDF: {filename}")
             return False
 
-        base64_images = [image_to_base64(img) for img in images]
-        
-        image_embeddings = []
-        for idx, img in enumerate(images):
-            print(f"Embedding page {idx + 1}/{len(images)}...")
-            emb = embedder.embed_image(img)
-            image_embeddings.append(emb)
+        print(f"Streaming {filename} page-by-page (Total pages: {total_pages})...")
+        batch_embeddings = []
+        batch_images = []
+        processed_count = 0
 
-        vector_size = len(image_embeddings[0]) if image_embeddings else 3072
-        
-        qdrant_manager.ensure_collection(vector_size=vector_size)
-        qdrant_manager.insert_image_embeddings(image_embeddings, base64_images)
-        print(f"Successfully ingested {filename} into Qdrant collection '{COLLECTION_NAME}'")
+        for page_num, total, page_img in iter_pdf_pages(pdf_path):
+            print(f"Embedding page {page_num}/{total}...")
+            b64_str = image_to_base64(page_img)
+            emb = embedder.embed_image(page_img)
+
+            batch_embeddings.append(emb)
+            batch_images.append(b64_str)
+            processed_count += 1
+
+            if len(batch_embeddings) >= batch_size or page_num == total:
+                vector_size = len(batch_embeddings[0]) if batch_embeddings else 3072
+                qdrant_manager.ensure_collection(vector_size=vector_size)
+                qdrant_manager.insert_image_embeddings(batch_embeddings, batch_images)
+                print(f"✅ Upserted {len(batch_embeddings)} pages to Qdrant (Progress: {page_num}/{total})")
+                batch_embeddings = []
+                batch_images = []
+
+        print(f"🎉 Successfully completed ingestion for {filename} ({processed_count} pages) into Qdrant collection '{COLLECTION_NAME}'")
         return True
     except Exception as e:
         print(f"Error during ingestion of {filename}: {e}")
