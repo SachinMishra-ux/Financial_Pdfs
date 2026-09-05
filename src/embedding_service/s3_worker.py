@@ -79,6 +79,9 @@ def ingest_pdf_file(pdf_path, filename, qdrant_manager, embedder, batch_size=5):
             batch_images.append(b64_str)
             processed_count += 1
 
+            # Mild rate-limiting pause to stay within Gemini RPM quotas
+            time.sleep(1.0)
+
             if len(batch_embeddings) >= batch_size or page_num == total:
                 vector_size = len(batch_embeddings[0]) if batch_embeddings else 3072
                 qdrant_manager.ensure_collection(vector_size=vector_size)

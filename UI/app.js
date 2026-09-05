@@ -5,14 +5,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiStatusBadge = document.getElementById('api-status-badge');
 
     // Default to deployed EC2 endpoint, or restore previous user input from localStorage
-    const savedApiUrl = localStorage.getItem('financial_rag_api_url') || 'http://13.61.154.83:8000';
+    let savedApiUrl = localStorage.getItem('financial_rag_api_url');
+    if (!savedApiUrl || savedApiUrl.includes('13.61.154.83')) {
+        savedApiUrl = 'http://16.192.213.58:8080';
+        localStorage.setItem('financial_rag_api_url', savedApiUrl);
+    }
     if (apiUrlInput) {
         apiUrlInput.value = savedApiUrl;
     }
 
     function getBaseUrl() {
-        if (!apiUrlInput) return 'http://13.61.154.83:8000';
-        const url = apiUrlInput.value.trim() || 'http://13.61.154.83:8000';
+        if (!apiUrlInput) return 'http://16.192.213.58:8080';
+        const url = apiUrlInput.value.trim() || 'http://16.192.213.58:8080';
         return url.replace(/\/+$/, '');
     }
 
