@@ -18,7 +18,7 @@ services:
       dockerfile: Dockerfile
     container_name: generation-api
     ports:
-      - "8000:8000"
+      - "8080:8080"
     environment:
       - QDRANT_URL=http://qdrant:6333
       - COLLECTION_NAME=financial_documents

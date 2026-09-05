@@ -28,7 +28,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY src/ ./src
 
 # Expose FastAPI application port
-EXPOSE 8000
+EXPOSE 8080
 
 # Set default runtime environment variables
 ENV PYTHONUNBUFFERED=1
@@ -39,4 +39,4 @@ ENV COLLECTION_NAME=financial_documents
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Run the FastAPI server using uvicorn (which is installed inside the virtual environment)
-CMD ["uvicorn", "src.generation_service.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.generation_service.app:app", "--host", "0.0.0.0", "--port", "8080"]
