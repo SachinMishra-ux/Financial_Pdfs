@@ -5,6 +5,9 @@ from pdf2image import convert_from_path, pdfinfo_from_path
 from pypdf import PdfReader
 import gc
 
+
+## document process
+
 def get_pdf_page_count(pdf_path):
     """Returns the total number of pages in the PDF file."""
     try:
