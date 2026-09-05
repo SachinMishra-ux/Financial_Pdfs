@@ -76,9 +76,16 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # ── Fix permissions (Docker Qdrant container writes files as root) ────────
+      - name: Fix workspace permissions
+        run: |
+          sudo chown -R $USER:$USER . || true
+
       # ── Checkout (needed for docker-compose.yml) ──────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          clean: false
 
       # ── Tear down existing stack ──────────────────────────────────────────────
       - name: Stop existing containers (if any)
